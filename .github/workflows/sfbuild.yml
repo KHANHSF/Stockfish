@@ -1,0 +1,33 @@
+name: Build Stockfish on All OS
+
+on:
+  workflow_dispatch:   # chạy tay
+  push:                # hoặc mỗi lần push code thì build
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [x86-64, x86-64-avx2]   # compile cả thường và AVX2
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Clone Stockfish
+      run: git clone https://github.com/official-stockfish/Stockfish.git
+
+    - name: Build Stockfish
+      run: |
+        cd Stockfish/src
+        make build ARCH=${{ matrix.arch }} -j$(nproc)
+      shell: bash
+
+    - name: Upload binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: stockfish-${{ matrix.os }}-${{ matrix.arch }}
+        path: Stockfish/src/stockfish*
